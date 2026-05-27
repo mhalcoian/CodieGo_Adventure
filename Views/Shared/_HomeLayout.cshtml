@@ -1,0 +1,491 @@
+﻿@using CodieGo_Adventure.Services
+@inject IGenericServices _services
+@{
+    int? guideStep = Context.Session.GetInt32("GuideStep");
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+
+    int? userId = Context.Session.GetInt32("UserId");
+    Profiles? profile = null;
+
+    if (userId != null)
+    {
+        profile = await _services.GetDataByIdAsync<Profiles>(p => p.ProfileId == userId);
+    }
+
+    string profileImage = profile != null ? profile.Base64StringImage : "";
+    string displayName = "Player";
+
+    if (profile != null)
+    {
+        displayName = profile.DisplayName;
+
+        if (profile.Image != null)
+        {
+            profileImage =
+                $"data:image/{profile.ImageExtension?.TrimStart('.')};base64,{Convert.ToBase64String(profile.Image)}";
+        }
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CODIE GO ADVENTURE</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CodieGo_Adventure.styles.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Grey+Qo&family=Pixelify+Sans:wght@400..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: radial-gradient(circle at top, #0b1734, #040814 75%);
+            color: #e5f6ff;
+            overflow: hidden;
+        }
+
+            /* CYBER GRID */
+            body::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-image: linear-gradient(rgba(0,255,255,.04) 2px, transparent 2px), linear-gradient(90deg, rgba(0,255,255,.04) 2px, transparent 2px);
+                background-size: 60px 60px;
+                pointer-events: none;
+            }
+
+        /* HEADER */
+        .header {
+            height: 70px;
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0,255,255,.25);
+            background: linear-gradient(180deg,#0b1734,#060b1a);
+            position: relative;
+            z-index: 5;
+        }
+
+        .logo {
+            color: #5df6ff;
+            letter-spacing: 2px;
+        }
+
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+            .nav a {
+                text-decoration: none;
+                color: #9ffcff;
+                opacity: .8;
+            }
+
+                .nav a.active {
+                    color: #ff3cff;
+                    border-bottom: 2px solid #ff3cff;
+                }
+
+        .right {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            align-items: center;
+        }
+
+        .page {
+            position: relative;
+            z-index: 2;
+            padding: 2rem;
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+        }
+
+        #guideOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.23);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .guide-box {
+            width: 420px;
+            padding: 30px;
+            border-radius: 16px;
+            background: linear-gradient(145deg,#0b1734,#0f1e4d);
+            border: 1px solid #00eaff;
+            box-shadow: 0 0 30px #00eaff;
+            text-align: center;
+        }
+
+            .guide-box h2 {
+                color: #00eaff;
+                margin-bottom: 10px;
+            }
+
+            .guide-box p {
+                opacity: .8;
+            }
+
+            .guide-box button {
+                margin-top: 20px;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 10px;
+                background: #00eaff;
+                color: #fff;
+                font-weight: bold;
+            }
+
+
+
+        /* edit button */
+        .edit-profile-btn {
+            background: rgba(220,0,0,.8);
+            border: 1px solid rgba(255,255,255,.15);
+            color: #fff;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="logo">&lt;/&gt; CODIE GO ADVENTURE</div>
+
+        <nav class="nav">
+            <a asp-controller="Home" asp-action="Dashboard" class="@(currentController == "Home" && currentAction == "Dashboard" ? "active" : "")">Dashboard</a>
+            <a asp-controller="Home" asp-action="Modules" class="@(currentController == "Home" && currentAction == "Modules" ? "active" : "")">Modules</a>
+            <a asp-controller="Home" asp-action="Challenges" class="@(currentController == "Home" && currentAction == "Challenges" ? "active" : "")">Challenges</a>
+            <a asp-controller="Home" asp-action="Leaderboard" class="@(currentController == "Home" && currentAction == "Leaderboard" ? "active" : "")">Leaderboard</a>
+        </nav>
+
+        <div class="right">
+
+            <a asp-controller="Users"
+               asp-action="Profile"
+               asp-route-id="@userId"
+               style="display:flex;align-items:center;gap:1rem;text-decoration:none;">
+
+                <img src="@profileImage"
+                     style="
+                width:50px;
+                height:50px;
+                border-radius:10%;
+                object-fit:cover;
+                border:@(currentController == "Users" && currentAction == "Profile"
+                                               ? "2px solid #ff3cff"
+                                               : "2px solid #00eaff");
+             " />
+
+                <span style="color:@(currentController == "Users" && currentAction == "Profile"
+                                                    ? "#ff3cff;border-bottom: 2px solid #ff3cff"
+                                                    : "#9ffcff");">
+                    @displayName
+                </span>
+
+            </a>
+
+            <form id="logoutForm" asp-controller="Users" asp-action="LogoutUser" method="post">
+                @Html.AntiForgeryToken()
+
+                <button type="button"
+                        class="btn edit-profile-btn"
+                        onclick="confirmLogout()">
+                    Logout
+                </button>
+            </form>
+
+        </div>
+    </header>
+
+    <div id="content" class="page" style="scrollbar-width: none;">
+        @RenderBody()
+    </div>
+
+    <div id="guideOverlay" style="display:none">
+        <div class="guide-box">
+
+            <h2 id="guideTitle"></h2>
+            <p id="guideText"></p>
+
+
+            <div style="display:flex;gap:10px;justify-content:center">
+
+                <button id="guideBtn" onclick="nextGuide()">NEXT</button>
+
+                <button onclick="skipGuide()"
+                        style="background:#ff3cff;border:none;padding:10px 20px;border-radius:10px;color:white;">
+                    SKIP
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+
+        const guideSteps = [
+        {
+            page:"/Home/Dashboard",
+            title:"DASHBOARD",
+            text:"This is your dashboard. Track your personal progress here.",
+            button:"NEXT",
+            next:"/Home/Modules"
+        },
+        {
+            page:"/Home/Modules",
+            title:"LEARNING MODULES",
+            text:"Modules teach coding step-by-step through interactive lessons.",
+            button:"NEXT",
+            next:"/Home/Challenges"
+        },
+        {
+            page:"/Home/Challenges",
+            title:"CODING ASSESSMENTS AND CHALLENGE",
+            text:"Assessments test your knowledge uppon completing a lesson, and unlock's a Challenge after finishing every lessons.",
+            button:"NEXT",
+            next:"/Home/Leaderboard"
+        },
+        {
+            page:"/Home/Leaderboard",
+            title:"LEADERBOARD",
+            text:"Compete with other coders and climb the rankings by competing in a challenge.",
+            button:"NEXT",
+            next:"/Users/Profile/@userId"
+        },
+        {
+            page:"/Users/Profile/@userId",
+            title:"YOUR PROFILE",
+            text:"You can customize your avatar, and review your achievements, track your history. Players will also visit your profile through the leaderboard and view your progress.",
+            button:"FINISH",
+            next:"/Home/Modules"
+        },
+        {
+        }
+        ];
+
+        let step = @(guideStep ?? -1);
+
+        function startGuide(){
+
+            if(step === -1) return;
+
+            if(step >= guideSteps.length) return;
+
+            const current = guideSteps[step];
+
+            if(!window.location.pathname.startsWith(current.page))
+                return;
+
+            document.getElementById("guideOverlay").style.display="flex";
+            document.getElementById("guideTitle").innerText=current.title;
+            document.getElementById("guideText").innerText=current.text;
+            document.getElementById("guideBtn").innerHTML=current.button;
+
+        }
+
+        document.addEventListener("DOMContentLoaded",startGuide);
+
+        function nextGuide(){
+
+            const current = guideSteps[step];
+
+            fetch("/Home/NextGuideStep",{
+                method:"POST"
+            }).then(()=>{
+
+                step++;
+
+                document.getElementById("guideOverlay").style.display="none";
+
+                if(step >= guideSteps.length){
+                    finishGuide();
+                    return;
+                }
+
+                if(current.next){
+                    showGameLoader("Loading Tutorial...", "Preparing next location");
+                    window.location.href=current.next;
+                }
+
+            });
+
+        }
+
+        function finishGuide(){
+
+            fetch("/Home/FinishOnboarding",{
+                method:"POST"
+            });
+
+        }
+
+        function skipGuide(){
+
+            fetch("/Home/SkipGuide",{
+                method:"POST"
+            }).then(()=>{
+
+                step = -1;
+
+                document.getElementById("guideOverlay").style.display="none";
+
+                showGameLoader("Preparing Game...", "Loading your progress");
+
+                setTimeout(()=>{
+                    window.location.href="/Home/Dashboard";
+                },500);
+
+            });
+
+        }
+
+        document.addEventListener("DOMContentLoaded",startGuide);
+
+    </script>
+
+    @* <div id="spotlight"></div>
+
+    if(current.target){
+    moveSpotlight(current.target);
+    }
+
+    .guide-box {
+    animation: floatIn 0.5s ease, idleFloat 3s ease-in-out infinite;
+}
+
+@keyframes floatIn {
+    from {
+        transform: translateY(40px) scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes idleFloat {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0); }
+}
+
+    #spotlight {
+    position: fixed;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(0,234,255,0.4) 0%, transparent 70%);
+    z-index: 9998;
+    transition: all 0.4s ease;
+    }
+
+    function moveSpotlight(selector){
+    const el = document.querySelector(selector);
+    if(!el) return;
+
+    const rect = el.getBoundingClientRect();
+
+    const spotlight = document.getElementById("spotlight");
+
+    spotlight.style.left = (rect.left + rect.width/2 - 100) + "px";
+    spotlight.style.top = (rect.top + rect.height/2 - 100) + "px";
+    } *@
+
+    <script>
+        function showRefreshLoader() {
+            showGameLoader(
+                'Refreshing...',
+                'Reloading game resources'
+            );
+        }
+
+        const content = document.getElementById("content");
+        content.addEventListener("copy", e => e.preventDefault())
+        content.addEventListener("paste", e => e.preventDefault())
+        content.addEventListener('contextmenu', e => e.preventDefault());
+        content.addEventListener('keydown', function(e) {
+            if (e.key === "F12" || (e.ctrlKey && e.shiftKey && ["I","J"].includes(e.key.toUpperCase())) ||
+            (e.ctrlKey && e.key.toUpperCase() === "U")) {
+                e.preventDefault();
+            }
+
+            if (e.key === 'F5' ||
+                (e.ctrlKey && e.key.toLowerCase() === 'r') ||
+                (e.metaKey && e.key.toLowerCase() === 'r')) {
+                const nav = performance.getEntriesByType("navigation")[0];
+
+                if (nav && nav.type === "reload") {
+                    showRefreshLoader();
+
+                    setTimeout(() => {
+                        hideGameLoader();
+                    }, 1000);
+                }
+            }
+        });
+        window.addEventListener('load', function () {
+            const nav = performance.getEntriesByType("navigation")[0];
+
+            if (nav && nav.type === "reload") {
+                showRefreshLoader();
+
+                setTimeout(() => {
+                    hideGameLoader();
+                }, 1000);
+            }
+        });
+    </script>
+
+    <script>
+        function confirmLogout() {
+
+            showConfirmPopup(
+                'LOGOUT',
+                'Are you sure you want to logout?',
+                () => {
+                    document.getElementById("logoutForm").submit();
+                }
+            );
+
+        }
+    </script>
+
+    @await Html.PartialAsync("_GamePopup")
+    @await Html.PartialAsync("_LoaderPopup")
+    @await Html.PartialAsync("_ToastPopup")
+    @await Html.PartialAsync("_UpdateProfileDetail", profile)
+    @await Html.PartialAsync("_ConfirmationPopup")
+    <script src="~/js/game-popup.js"></script>
+    <script src="~/js/game-loader.js"></script>
+    <script src="~/js/game-toast.js"></script>
+    <script src="~/js/confirmation-popup.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

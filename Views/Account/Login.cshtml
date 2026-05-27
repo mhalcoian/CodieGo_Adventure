@@ -1,0 +1,295 @@
+﻿@model Users
+
+@{
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+@if (TempData["Popup"] != null)
+{
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const popup = @Html.Raw(TempData["Popup"]);
+                showGameToast(
+                    popup.type,
+                    popup.title,
+                    popup.message
+                );
+            });
+        </script>
+    }
+}
+
+<style>
+    .topbar {
+        height: 60px;
+        padding: 0 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(0,255,255,.2);
+    }
+
+    .top-links a {
+        color: #7ffcff;
+        font-size: 12px;
+        margin-left: 20px;
+        text-decoration: none;
+    }
+
+    .logo {
+        font-size: 18px;
+        color: #5df6ff;
+        letter-spacing: 2px;
+    }
+
+    .top-actions button {
+        background: transparent;
+        border: 1px solid rgba(0,255,255,.4);
+        color: #9ffcff;
+        padding: 6px 14px;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+
+    .wrapper {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        height: calc(100vh - 60px);
+        padding: 50px;
+        gap: 40px;
+    }
+
+    /* LEFT */
+    .left h1 {
+        font-size: 42px;
+        color: #64f7ff;
+        margin-bottom: 15px;
+    }
+
+    .left p {
+        max-width: 480px;
+        line-height: 1.6;
+        opacity: .85;
+    }
+
+    .secure-box {
+        margin-top: 15px;
+        border: 1px solid rgba(0,255,255,.4);
+        padding: 15px;
+        background: rgba(0,0,0,.35);
+    }
+
+        .secure-box h4 {
+            color: #64f7ff;
+        }
+
+    .update-box {
+        margin-top: 15px;
+        border: 1px solid #a855f7;
+        padding: 15px;
+        background: linear-gradient(135deg,#26123f,#12061f);
+    }
+
+        .update-box h4 {
+            color: #a855f7;
+        }
+
+    .notice-box {
+        margin-top: 15px;
+        border: 1px solid #eab308;
+        padding: 15px;
+        background: rgba(0,0,0,.35);
+    }
+
+        .notice-box h4 {
+            color: #eab308;
+        }
+
+        .notice-box p {
+            color: rgba(234, 179, 8, .75);
+        }
+
+    /* RIGHT */
+    .terminal-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .terminal {
+        border: 1px solid rgba(0,255,255,.45);
+        padding: 30px;
+        background: rgba(3,10,25,.85);
+        box-shadow: 0 0 25px rgba(0,255,255,.25);
+    }
+
+        .terminal h2 {
+            color: #6ef9ff;
+            margin-bottom: 30px;
+        }
+
+    .status {
+        border: 1px solid rgba(0,255,255,.3);
+        padding: 15px;
+        font-size: 12px;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+        .status span {
+            float: right;
+            color: #7bff9c;
+        }
+
+    .field {
+        margin-bottom: 15px;
+    }
+
+        .field input {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid rgba(0,255,255,.4);
+            color: #dffaff;
+        }
+
+    .password-field {
+        position: relative;
+    }
+
+        .password-field input {
+            padding-right: 45px;
+        }
+
+    .eye {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6ef9ff;
+        font-size: 18px;
+        opacity: 0.8;
+        transition: 0.2s;
+    }
+
+        .eye:hover {
+            color: #00ffff;
+            opacity: 1;
+        }
+
+    .options {
+        display: flex;
+        justify-content: end;
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(90deg,#00eaff,#00bcd4);
+        border: none;
+        color: #031318;
+        font-weight: 600;
+        letter-spacing: 3px;
+        cursor: pointer;
+        box-shadow: 0 0 20px rgba(0,255,255,.45);
+        transition: .25s;
+    }
+
+        .btn:hover {
+            transform: scale(1.03);
+        }
+
+    .footer {
+        position: absolute;
+        bottom: 15px;
+        left: 50px;
+        font-size: 11px;
+        opacity: .6;
+    }
+</style>
+
+<div class="topbar">
+    <div class="logo">&lt;/&gt; CODIE GO ADVENTURE</div>
+    <div class="top-links">
+        <small>New to the adventure?</small>
+        <a asp-controller="Account" asp-action="Register">
+            CREATE ACCOUNT
+        </a>
+    </div>
+</div>
+
+<div class="wrapper">
+
+    <!-- LEFT PANEL -->
+    <div class="left">
+        <h1>ENTER THE WORLD OF<br />C# PROGRAMMING</h1>
+        <p>
+            Initialize your connection to the c# programming. learn to 
+            code, and test your new profound skills through challenges.
+        </p>
+
+        <div class="secure-box">
+            <h4>SECURE LOGIN PROTOCOL</h4>
+            <p>256-bit Encryption</p>
+        </div>
+
+        <div class="update-box">
+            <h4>NEW: CODING CHALLENGE</h4>
+            <p>
+                Experience programming challenges, and test your 
+                skill to its limits.
+            </p>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="terminal-container">
+        <div class="terminal">
+            <h2>LOGIN</h2>
+
+            <div class="status">
+                Server <span>ONLINE</span><br />
+                Connection <span>SECURE</span><br />
+            </div>
+
+            <form asp-action="LoginUser" method="post" onsubmit="showGameLoader('Logging In...', 'Fetching player data')">
+
+                <div class="field">
+                    <input type="text" name="username" placeholder="Username or Email" value="@ViewBag.Username" />
+                </div>
+
+                <div class="field password-field">
+                    <input type="password" name="password" id="password" placeholder="Password" value="@ViewBag.Password" />
+                    <span class="eye" onclick="togglePassword()">👁</span>
+                </div>
+
+                <div class="options">
+                    <a asp-action="ForgotPassword" style="color:#6ef9ff">Forgot password?</a>
+                </div>
+
+                <button class="btn">LOGIN</button>
+            </form>
+        </div>
+
+        <div class="notice-box">
+            <h4>SECURITY NOTICE</h4>
+            <p>
+                Never share your credentials.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    @@ALL RIGHTS RESERVED · CODIE GO ADVENTURE · TEAM
+</div>
+
+<script>
+    function togglePassword() {
+        const input = document.getElementById("password");
+        input.type = input.type === "password" ? "text" : "password";
+    }
+</script>

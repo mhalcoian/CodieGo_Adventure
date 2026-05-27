@@ -1,0 +1,187 @@
+﻿@model List<ModulesProgress>
+@{
+    Layout = "~/Views/Shared/_HomeLayout.cshtml";
+}
+
+@if (TempData["Popup"] != null)
+{
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const popup = @Html.Raw(TempData["Popup"]);
+                showGamePopup(
+                    popup.type,
+                    popup.title,
+                    popup.message
+                );
+            });
+        </script>
+    }
+}
+
+<style>
+    .modules-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+        .modules-header h1 {
+            color: #5df6ff;
+            font-size: 26px;
+        }
+
+    .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+    }
+
+    .module-card {
+        position: relative;
+        padding: 22px;
+        border-radius: 16px;
+        background: linear-gradient(135deg,#0b1734,#101c42);
+        border: 1px solid rgba(93,246,255,.3);
+        box-shadow: 0 0 30px rgba(0,234,255,.12);
+    }
+
+        .module-card.pink {
+            background: linear-gradient(135deg,#2b0f3a,#1a0630);
+            border-color: #ff3cff;
+            box-shadow: 0 0 30px rgba(255,60,255,.2);
+        }
+
+        .module-card.purple {
+            background: linear-gradient(135deg,#26123f,#12061f);
+            border-color: #a855f7;
+        }
+
+        .module-card.locked {
+            opacity: .4;
+            text-align: center;
+        }
+
+    .module-status {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-weight: 700;
+        background: #00eaff;
+        color: #000;
+    }
+
+        .module-status.inprogress {
+            background: #ff3cff;
+            color: #fff;
+        }
+
+        .module-status.dim {
+            background: rgba(255,255,255,.25);
+            color: #ddd;
+        }
+
+    .module-card h3 {
+        margin-top: 35px;
+        color: #5df6ff;
+        font-size: 18px;
+    }
+
+    .module-card p {
+        font-size: 13px;
+        opacity: .8;
+        margin-top: 6px;
+    }
+
+    .module-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin: 18px 0;
+        opacity: .85;
+    }
+
+    .progress-bar {
+        height: 6px;
+        background: rgba(255,255,255,.12);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 18px;
+    }
+
+        .progress-bar div {
+            height: 100%;
+            background: linear-gradient(90deg,#00eaff,#7bff9c);
+        }
+
+    .module-btn {
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        border: none;
+        font-weight: bold;
+        background: #00eaff;
+        cursor: pointer;
+    }
+
+        .module-btn.alt {
+            background: #ff3cff;
+            color: #fff;
+        }
+
+        .module-btn.locked {
+            background: rgba(255,255,255,.15);
+            color: #888;
+            cursor: not-allowed;
+        }
+
+    .lock-icon {
+        font-size: 42px;
+        margin-bottom: 12px;
+    }
+</style>
+
+<div class="modules-header">
+    <h1>WHERE YOUR LEARNING ADVENTURE STARTS</h1>
+</div>
+
+<div class="modules-grid">
+    @foreach (var modules in Model)
+    {
+        <!-- UNLOCKED -->
+        if (!modules.IsLocked)
+        {
+            <div class="module-card @(modules.Status == "NOT STARTED" ? "purple" : modules.Status == "IN PROGRESS" ? "pink" : "")">
+                <div class="module-status @(modules.Status == "NOT STARTED" ? "dim" : modules.Status == "IN PROGRESS" ? "inprogress" : "")">@modules.Status</div>
+
+                <h3>@modules.Modules.Title</h3>
+                <p>@modules.Modules.Description</p>
+
+                <div class="module-meta">
+                    <span>📘 @modules.CompletedLessons/@modules.Modules.TotalLessons Lessons</span>
+                </div>
+
+                <div class="progress-bar">
+                    <div style="width:@modules.TrackProgressBar%"></div>
+                </div>
+
+                <a asp-controller="Experience" asp-action="Module" asp-route-order="@modules.Modules.Order" class="btn module-btn @(modules.Status == "IN PROGRESS" ? "alt" : "")" onclick="showGameLoader('Redirecting...', 'Please wait for a moment')">@(modules.Status == "NOT STARTED" ? "START MODULE" : modules.Status == "IN PROGRESS" ? "CONTINUE MODULE" : "REVIEW MODULE")</a>
+            </div>
+        }
+        else
+        {
+            <!-- LOCKED -->
+            <div class="module-card locked">
+                <div class="lock-icon">🔒</div>
+                <h3>???</h3>
+                <p>Requirements not met. Complete the requirements to unlock this content.</p>
+                <button class="module-btn locked">REQUIREMENTS NOT MET</button>
+            </div>
+        }
+    }
+
+</div>

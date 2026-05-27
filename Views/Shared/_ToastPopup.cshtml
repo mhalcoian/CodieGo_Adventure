@@ -1,0 +1,63 @@
+﻿<style>
+    .game-toast-container {
+        position: fixed;
+        bottom: 20px;
+        align-items: end;
+        right: 20px;
+        z-index: 9999;
+        pointer-events: none;
+    }
+
+    .game-toast {
+        width: 360px;
+        padding: 18px;
+        margin-top: 10px;
+        background: linear-gradient(180deg, #0b132b, #050a18);
+        border: 2px solid #00f6ff;
+        font-family: 'Orbitron', sans-serif;
+        color: #b8d9ff;
+        opacity: 0;
+        transform: translateX(0) translateY(60px);
+        transition: transform 0.45s ease, opacity 0.45s ease;
+    }
+
+        .game-toast.show {
+            opacity: 1;
+            transform: translateX(0) translateY(0);
+        }
+
+        .game-toast.toast-exit {
+            opacity: 0;
+            transform: translateX(120%) translateY(0);
+            transition: transform 0.6s ease, opacity 0.6s ease;
+        }
+
+    .toast-title {
+        font-size: 16px;
+        color: #00f6ff;
+        margin-bottom: 6px;
+        letter-spacing: 1px;
+    }
+
+    .toast-message {
+        font-size: 13px;
+        opacity: 0.9;
+    }
+
+    .toast-success {
+        border-color: #00ff9c;
+        box-shadow: 0 0 20px rgba(0, 246, 255, 0.6);
+    }
+
+    .toast-error {
+        border-color: #ff4d6d;
+        box-shadow: 0 0 20px rgba(100, 30, 43, 0.6);
+    }
+
+    .toast-warning {
+        border-color: #ffd166;
+        box-shadow: 0 0 20px rgba(255, 209, 102 0.6);
+    }
+</style>
+
+<div id="gameToastContainer" class="game-toast-container"></div>

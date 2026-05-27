@@ -1,0 +1,101 @@
+﻿<style>
+    .completion-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.85);
+        backdrop-filter: blur(6px);
+        display: none;
+        z-index: 99999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .completion-box {
+        width: 600px;
+        padding: 30px;
+        border-radius: 16px;
+        text-align: center;
+        background: linear-gradient(135deg,#0b1734,#101c42);
+        border: 1px solid rgba(93,246,255,.3);
+        box-shadow: 0 0 40px rgba(0,234,255,.25);
+    }
+
+    .reward-img {
+        width: 140px;
+        margin: 20px 0;
+    }
+
+    .completion-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+        .completion-actions a {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+</style>
+
+<div id="completionOverlay" class="completion-overlay">
+    <div class="completion-box">
+
+        <h1 id="completionTitle">MODULE COMPLETE</h1>
+
+        <p id="completionMessage">
+            You have successfully finished the module.
+        </p>
+
+        <div style="position:relative;">
+            <img id="completionReward"
+                 src="/images/rewards/puzzle-piece.png"
+                 alt="Reward"
+                 class="reward-img" />
+
+            <span style="position:absolute;
+                top:45%;
+                left:50%;
+                transform:translateX(-50%);
+                font-size:36px;
+                text-shadow:
+                0 0 5px green,
+                0 0 10px green,
+                0 0 20px green,
+                0 0 40px rgba(4,128,0,0.8);
+            ">🧩</span>
+        </div>
+
+        <p id="completionDescription">
+            You have successfully finished the module.
+        </p>
+
+        <div class="completion-actions">
+
+            <!-- Exit -->
+            <a id="btnExit"
+               asp-controller="Home"
+               asp-action="Modules"
+               class="btn btn-danger"
+               style="align-content:center;">
+                EXIT
+            </a>
+
+            <!-- Retry -->
+            <a id="btnRetry"
+               class="btn btn-warning"
+               style="align-content:center;">
+                RETRY
+            </a>
+
+            <!-- Proceed -->
+            <a id="btnProceed"
+               class="btn btn-success"
+               style="align-content:center;">
+                PROCEED TO ASSESSMENT
+            </a>
+
+        </div>
+
+    </div>
+</div>

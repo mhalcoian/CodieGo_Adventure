@@ -1,0 +1,56 @@
+﻿@{
+}
+
+<style>
+    .game-hud-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        min-width: 320px;
+        padding: 18px 28px;
+        text-align: center;
+        background: linear-gradient(180deg,#0b132b,#050a18);
+        border: 2px solid #00f6ff;
+        box-shadow: 0 0 20px rgba(0,246,255,0.6), inset 0 0 10px rgba(0,246,255,0.15);
+        pointer-events: none;
+        opacity: 0;
+        transition: all .35s ease;
+        z-index:998;
+    }
+
+        .game-hud-message.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+    .hud-title {
+        font-size: 20px;
+        letter-spacing: 1px;
+    }
+
+    .hud-message {
+        font-size: 14px;
+        margin-top: 5px;
+        color: #b8d9ff;
+    }
+
+    /* colors */
+
+    .hud-success .hud-title {
+        color: #00ff9c;
+    }
+
+    .hud-error .hud-title {
+        color: #ff4d6d;
+    }
+
+    .hud-warning .hud-title {
+        color: #ffd166;
+    }
+</style>
+
+<div id="gameHudMessage" class="game-hud-message">
+    <div class="hud-title" id="hudTitle"></div>
+    <div class="hud-message" id="hudMessage"></div>
+</div>

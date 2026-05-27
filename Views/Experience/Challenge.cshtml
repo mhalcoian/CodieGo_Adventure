@@ -1,0 +1,323 @@
+﻿@{
+    int order = ViewBag.ChallengeOrder;
+    Layout = "~/Views/Shared/_ExperienceLayout.cshtml";
+}
+
+<div style="height:100%; display:flex; flex-direction:column;">
+
+    <div style="width:100%; background:#aaa; color:#000; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+        <h2>Challenge Mode</h2>
+
+        <h4 id="scoreBox">
+            Score: 0
+        </h4>
+
+        <h4>
+            Time Left:
+            <span id="timer">@ViewBag.TimeFormatted</span>
+        </h4>
+    </div>
+
+    <div id="challengeBox" style="
+                height:150px;
+                background:#0b0f25;
+                color:#fff;
+                padding:12px;
+                margin-top:8px;
+                overflow-y:auto;
+                scrollbar-width:none;
+                white-space:pre-wrap;
+            ">
+        Loading challenge...
+    </div>
+
+    <div style="height:100%; flex:1; min-height:0; display:flex; color:#fff; background:#0b0f25;">
+
+
+        <!-- LEFT PANEL: Challenge / Background -->
+        <div style="width:100%; display:flex; flex-direction:column;">
+            <!-- Code Panel -->
+            <div style="flex: 1; min-height:0; border:1px solid #5df6ff33; padding:10px; display:flex; flex-direction:column; gap:0.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>CODE PANEL</h3>
+                    <div>
+                        <button id="skipBtn" style="background:#aaa; color:#000; border:none; padding:5px 15px; border-radius:6px;">
+                            SKIP
+                        </button>
+                        <button id="runBtn" style="background:#00eaff; color:#000; border:none; padding:5px 15px; border-radius:6px;">EXECUTE</button>
+                    </div>
+                </div>
+                <div id="editor" style="flex: 1; min-height:0; margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Code Editor + Output -->
+        <div style="width:100%; display:flex; flex-direction:column;">
+            <!-- Output / Error Console -->
+            <div style="flex: 1; min-height:0; background:#111; border:1px solid #5df6ff33; padding:10px; height:200px; overflow-y:auto;">
+                <h4>OUTPUT CONSOLE</h4>
+                <div id="outputBox"
+                    readonly
+                    style="
+                    width:100%;
+                    flex:1;
+                    min-height:0;
+                    background:transparent;
+                    border:none;
+                    outline:none;
+                    resize:none;
+                    white-space:pre-wrap;
+                    overflow-y:auto;
+                    scrollbar-width:none;
+                    margin-top:8px;
+                "></div>
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+
+<script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<script>
+    const defaultValue = `using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Solve the challenge here
+    }
+}
+`;
+        require.config({ paths: { vs: "https://unpkg.com/monaco-editor@0.45.0/min/vs" } });
+
+        let editor;
+        require(["vs/editor/editor.main"], function () {
+            editor = monaco.editor.create(document.getElementById("editor"), {
+                value: defaultValue,
+                language: "csharp",
+                theme: "vs-dark"
+            });
+        });
+
+        async function loadCurrentChallenge() {
+            const res = await fetch("/Challenge/Init");
+            const data = await res.json();
+
+            numberOfSkips = data.skips;
+            
+            showGameLoader('Initializing...', 'Loading game assets');
+
+            document.getElementById("challengeBox").innerText =
+                data.challenge ?? "Game Started!";
+
+            document.getElementById('skipBtn').innerText = `SKIPS(${numberOfSkips})`;
+
+            document.getElementById("outputBox").innerText = "";
+        }
+
+        async function nextChallengeOrEnd(nextChallenge, finished) {
+            await givePlayerScore();
+            if (finished) {
+                IsError = false;
+                clearInterval(timerInterval);
+                document.getElementById("challengeBox").innerText =
+                    "GAME OVER";
+                await finishGame();
+                setTimeout(() => {
+                    const totalScore = scores + timeLeft;
+
+                    showChallengeCompletionOverlay({
+
+                        title: "CHALLENGE COMPLETED",
+                        message: "You completed your daily challenge!",
+
+                        score: scores,
+                        timeLeft: timeLeft,
+                        totalScore: totalScore,
+
+                        exitUrl: "/Home/Challenges"
+
+                    });
+                },1000);
+            } else {
+                IsError = false;
+                document.getElementById("challengeBox").innerText =
+                    "Next Challenge:\n" + nextChallenge;
+            }
+        }
+
+        loadCurrentChallenge();
+
+        document.getElementById("runBtn").onclick = async () => {
+            monaco.editor.setModelMarkers(editor.getModel(), "roslyn", []);
+            const code = editor.getValue();
+
+            showGameLoader('Validating...', 'This may take awhile');
+
+            const res = await fetch("/Challenge/Compile", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(code)
+            });
+
+            const data = await res.json();
+
+            // show compilation errors in Monaco editor
+            if (data.errors?.length) {
+                monaco.editor.setModelMarkers(
+                    editor.getModel(),
+                    "roslyn",
+                    data.errors.map(d => ({
+                        startLineNumber: d.line,
+                        startColumn: d.column,
+                        endLineNumber: d.line,
+                        endColumn: d.column + 1,
+                        message: d.message,
+                        severity: monaco.MarkerSeverity.Error
+                    }))
+                );
+                hideGameLoader();
+                return;
+            }
+
+            // show runtime errors
+            if (data.runtimeError) {
+                IsError = true;
+                showGamePopup("error", "ERROR", data.runtimeError);
+                return;
+            }
+
+            // show output
+            document.getElementById("outputBox").innerText = data.output;
+
+            // handle validation
+            if (!data.passed) {
+                IsError = true;
+                hideGameLoader();
+                showGamePopup("error", "ERROR", data.message);
+                return;
+            }
+
+            if (data.score !== undefined) {
+                scores += IsError == true ? data.score : data.score + 300;
+                rawScore = IsError == true ? data.score : data.score + 300;
+                document.getElementById("scoreBox").innerText = "Score: " + scores;
+            }
+
+            if (data.earnedBadge) {
+                earnedBadge = data.earnedBadge;
+                showGamePopup("success", "BADGE EARNED!", `You've earned the badge: ${earnedBadge}`);
+            }
+
+            showGamePopup("success", "SUCCESS", data.message);
+
+            // load next challenge
+            await nextChallengeOrEnd(data.nextChallenge, data.finished);
+        };
+
+        document.getElementById("skipBtn").onclick = async () => {
+            if (numberOfSkips <= 0) {
+                return;
+            }
+
+            showConfirmPopup(
+                'SKIP CHALLENGE',
+                'Are you sure you want to skip? -10min',
+                async ()=>{
+                    const res = await fetch("/Challenge/Skip", { method: "POST" });
+                    const data = await res.json();
+
+                    numberOfSkips = data.skips;
+
+                    document.getElementById('skipBtn').innerText = `SKIPS(${numberOfSkips})`;
+
+                    timeLeft -= 600;
+
+                    if (timeLeft < 0) {
+                        timeLeft = 0;
+                        onTimeExpired();
+                        return;
+                    }
+
+                    await nextChallengeOrEnd(data.nextChallenge, data.finished);
+                }
+            )
+        };
+
+    let timeLeft = @ViewBag.TimeSeconds;
+    const timePerChallenge = @ViewBag.TimePerChallenge;
+    let timerInterval = null;
+    let order = @order;
+    let scores = 0;
+    let IsError = false;
+    let numberOfSkips = 0;
+    let calculateScore = 0;
+    let rawScore = 0;
+    let earnedBadge = null;
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                onTimeExpired();
+                finishGame();
+                return;
+            }
+
+            timeLeft--;
+            hideGameLoader();
+
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+
+            document.getElementById("timer").innerText =
+                `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+        }, 1000);
+    }
+
+    function onTimeExpired() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+
+        document.getElementById("timer").innerText =
+            `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+        document.getElementById("challengeBox").innerText =
+            "TIME UP";
+    }
+
+    async function givePlayerScore() {
+        await fetch("/Challenge/Scores", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                Order: order,
+                Score: rawScore,
+                EarnedBadge: earnedBadge
+            })
+        });
+    }
+
+    async function finishGame() {
+        const res = await fetch("/Challenge/Finish", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                Order: order, 
+                TimeLeft: timeLeft
+            })
+        });
+
+        const data = await res.json();
+
+        showGamePopup("success", "SUCCESS", data.message);
+
+        document.getElementById("runBtn").disabled = true;
+        document.getElementById("skipBtn").disabled = true;
+    }
+
+    startTimer();
+</script>

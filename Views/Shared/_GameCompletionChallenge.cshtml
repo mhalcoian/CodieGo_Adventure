@@ -1,0 +1,96 @@
+﻿@{
+}
+<style>
+    .completion-box {
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+        height:500px;
+    }
+
+    .challenge-stats {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .stat-card {
+        background: #0f1b3d;
+        border: 1px solid rgba(93,246,255,.25);
+        padding: 18px 25px;
+        border-radius: 12px;
+        text-align: center;
+        min-width: 140px;
+        box-shadow: 0 0 15px rgba(0,234,255,.15);
+    }
+
+    .stat-label {
+        display: block;
+        font-size: 12px;
+        opacity: .7;
+        letter-spacing: 1px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .total {
+        border: 1px solid #00eaff;
+        box-shadow: 0 0 20px rgba(0,234,255,.4);
+    }
+
+        .total .stat-value {
+            font-size: 28px;
+            color: #00eaff;
+            text-shadow: 0 0 10px #00eaff;
+        }
+</style>
+
+<div id="completionOverlayChallenge" class="completion-overlay">
+
+    <div class="completion-box">
+
+        <h1 id="completionTitleChallenge">CHALLENGE COMPLETED</h1>
+
+        <p id="completionMessageChallenge">
+            Great job finishing the challenge mode!
+        </p>
+
+        <!-- SCORE STATS -->
+        <div class="challenge-stats">
+
+            <div class="stat-card total">
+                <span class="stat-label">SCORE</span>
+                <span id="completionScore" class="stat-value">0</span>
+            </div>
+
+            <div class="stat-card total">
+                <span class="stat-label">TIME LEFT</span>
+                <span id="completionTime" class="stat-value">00:00</span>
+            </div>
+
+            <div class="stat-card total">
+                <span class="stat-label">TOTAL SCORE</span>
+                <span id="completionTotal" class="stat-value">0</span>
+            </div>
+
+        </div>
+
+        <!-- ACTION -->
+        <div class="completion-actions">
+
+            <a id="btnExitChallenge"
+               asp-controller="Home"
+               asp-action="Challenges"
+               class="btn btn-danger">
+                EXIT
+            </a>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,274 @@
+﻿@{
+    int order = ViewBag.Order;
+    int stage = ViewBag.CurrentProgress;
+    string lessonKey = ViewBag.LessonKey;
+    int totalStages = ViewBag.TotalStages;
+    Layout = "~/Views/Shared/_ExperienceLayout.cshtml";
+}
+
+<div style="
+    height:100%; 
+    display:flex;
+    flex-direction:column;
+    background:#0b0f25;
+">
+
+    <div style="background:#00eaff; min-height:15%; display:flex; width:100%;
+            position:relative;
+            z-index:999;">
+        <h4 style="
+            color:#000;
+            padding:0 20px;
+            text-align:center;
+            align-content:center;
+        ">
+            GENERAL<br />INSTRUCTION
+        </h4>
+        <div id="instructionBox" style="
+                flex:1;
+                min-height:0;
+                background:#222;
+                text-align:left;
+                align-content:center;
+                padding:0 20px;
+                color:#fff;
+                overflow-y:auto;
+                scrollbar-width:none;
+                white-space:pre-wrap;
+            ">
+            Loading challenge...
+        </div>
+    </div>
+
+    <div id="assessmentBox" style="
+                min-height:0;
+                height:150px;
+                color:#fff;
+                padding:12px;
+                overflow-y:auto;
+                scrollbar-width:none;
+                white-space:pre-wrap;
+                width: 100%;
+            ">
+        Loading challenge...
+    </div>
+
+    <div style="
+        flex:1;
+        min-height:0;
+        display:flex;
+        margin-top:8px;
+    ">
+
+        <!-- LEFT PANEL: Code Editor -->
+        <div style="
+            position:relative;
+            width:100%;
+        ">
+            <!-- Code Panel -->
+            <div style="height:100%; flex:1; min-height:0; border:1px solid #5df6ff33; padding:10px; display:flex; flex-direction:column; gap:0.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>CODE PANEL</h3>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id="scoreBox" style="color:#00eaff; font-weight:bold;">
+                            SCORE: 10
+                        </span>
+
+                        <button id="runBtn"
+                                style="background:#00eaff; color:#000; border:none; padding:5px 15px; border-radius:6px;">
+                            EXECUTE
+                        </button>
+                    </div>
+                </div>
+                <div id="editor" style="flex:1; min-height:0; margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Output -->
+        <div style="width:50%; display:flex; flex-direction:column;">
+
+            <!-- Output / Error Console -->
+            <div style="flex:1; min-height:0; background:#111; border:1px solid #5df6ff33; padding:10px; height:200px; overflow-y:auto;">
+                <h4>OUTPUT CONSOLE</h4>
+                <div id="outputBox" 
+                    readonly
+                    style="
+                    width:100%;
+                    flex:1;
+                    min-height:0;
+                    background:transparent;
+                    border:none;
+                    outline:none;
+                    resize:none;
+                    white-space:pre-wrap;
+                    overflow-y:auto;
+                    scrollbar-width:none;
+                    margin-top:8px;
+                "></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<script>
+        const defaultValue = `using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // your coding assessments starts here
+    }
+}
+    `;
+        require.config({ paths: { vs: "https://unpkg.com/monaco-editor@0.45.0/min/vs" } });
+
+        let editor;
+        require(["vs/editor/editor.main"], function () {
+            editor = monaco.editor.create(document.getElementById("editor"), {
+                value: defaultValue,
+                language: "csharp",
+                theme: "vs-dark"
+            });
+        });
+
+    let lessonType = "@lessonKey";
+    let stage = @stage;
+    let order = @order;
+    const totalStages = @totalStages;
+
+    async function loadGuide(stage) {
+        const res = await fetch(`/Assessment/GetGuide?lessonType=${lessonType}&stage=${stage}`);
+        const data = await res.json();
+        document.getElementById("assessmentBox").innerText = data.guide;
+        enableEditor(true);
+    }
+
+    async function loadInstruction(order) {
+        const res = await fetch(`/Assessment/GetInstruction?order=${order}`);
+        const data = await res.json();
+        document.getElementById("instructionBox").innerText = data.instruction;
+        enableEditor(true);
+    }
+
+    document.getElementById("runBtn").onclick = async () => {
+        monaco.editor.setModelMarkers(editor.getModel(), "roslyn", []);
+        const code = editor.getValue();
+
+        showGameLoader('Validating...', 'This may take awhile');
+
+        const res = await fetch(`/Assessment/Compile?lessonType=${lessonType}&stage=${stage}&order=${order}&score=${score <= 0 ? 1 : score}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(code)
+        });
+
+        const data = await res.json();
+
+        if (data.errors?.length) {
+            monaco.editor.setModelMarkers(
+                editor.getModel(),
+                "roslyn",
+                data.errors.map(d => ({
+                    startLineNumber: d.line,
+                    startColumn: d.column,
+                    endLineNumber: d.line,
+                    endColumn: d.column + 1,
+                    message: d.message,
+                    severity: monaco.MarkerSeverity.Error
+                }))
+            );
+            const output = data.errors
+                .map(e => `Error (Line ${e.line}, Col ${e.column}): ${e.message}`)
+                .join("\n");
+            hideGameLoader();
+            score = Math.max(0, score - 2);
+            document.getElementById("scoreBox").innerText = `SCORE: ${score}`;
+            document.getElementById("outputBox").innerText = output;
+            return;
+        }
+
+        if (data.runtimeError) {
+            hideGameLoader();
+            score = Math.max(0, score - 2);
+            document.getElementById("scoreBox").innerText = `SCORE: ${score}`;
+            showGameToast("warning", "WARNING", data.runtimeError);
+            return;
+        }
+
+        if (!data.passed) {
+            hideGameLoader();
+            score = Math.max(0, score - 2);
+            document.getElementById("scoreBox").innerText = `SCORE: ${score}`;
+            document.getElementById("outputBox").innerText = data.output;
+            showGameToast("error", "ERROR", data.message);
+        } else {
+            stage++;
+
+            editor.setValue(defaultValue);
+
+            hideGameLoader();
+            showGameToast("success", "SUCCESS", data.message);
+            document.getElementById("outputBox").innerText = data.output;
+            document.getElementById("assessmentBox").innerText = "";
+
+            enableEditor(false);
+
+            setTimeout(() => {
+                if (stage < totalStages) {
+                    loadGuide(stage);
+                    // document.getElementById("outputBox").innerText = "";
+                } else {
+                    showAssessmentCompletionOverlay({
+                        title: "ASSESSMENT COMPLETED",
+                        message: "You have completed the assessment.",
+                        description: "How was the assessment? Was it okay?\nwould you like to retry or start your next module.",
+                        scoreAssessment: score <= 0 ? score : "+" + score,
+
+                        exitUrl: "/Home/Challenges",
+                        retryUrl: window.location.href,
+                        proceedUrl: `/Experience/Module?order=${order+1}`
+                    })
+                    document.getElementById("outputBox").innerText = "";
+                }
+            }, 0);
+        }
+    };
+
+    function enableEditor(enable) {
+        if (!editor) return;
+
+        editor.updateOptions({
+            readOnly: !enable
+        });
+
+        const runBtn = document.getElementById("runBtn");
+        if (runBtn) {
+            runBtn.disabled = !enable;
+            runBtn.style.opacity = enable ? "1" : "0.5";
+            runBtn.style.cursor = enable ? "pointer" : "not-allowed";
+        }
+    }
+
+    async function loadSavedScore() {
+        const res = await fetch(`/Assessment/SavedScore?order=${order}`);
+        const data = await res.json();
+
+        score = data.currentScore ?? 10;
+        document.getElementById("scoreBox").innerText = `SCORE: ${score}`;
+    }
+    
+    let score = 10;
+
+    window.onload = async () => {
+        enableEditor(false);
+        await loadSavedScore();
+        loadGuide(stage);
+        loadInstruction(order);
+        document.getElementById("scoreBox").innerText = `SCORE: ${score}`;
+    };
+</script>

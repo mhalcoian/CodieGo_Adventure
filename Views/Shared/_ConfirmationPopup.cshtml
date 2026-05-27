@@ -1,0 +1,96 @@
+﻿@{
+}
+<style>
+    .game-popup-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 10, 20, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(3px);
+    }
+
+    .game-popup {
+        width: 420px;
+        padding: 30px;
+        background: linear-gradient(180deg, #0b132b, #050a18);
+        border: 2px solid #00f6ff;
+        box-shadow: 0 0 25px rgba(0, 246, 255, 0.6), inset 0 0 15px rgba(0, 246, 255, 0.15);
+        text-align: center;
+        animation: popupIn 0.25s ease-out;
+    }
+
+    .popup-icon {
+        font-size: 42px;
+        margin-bottom: 10px;
+    }
+
+    .popup-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 20px;
+        color: #00f6ff;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+
+    .popup-message {
+        font-size: 14px;
+        color: #b8d9ff;
+        opacity: 0.9;
+    }
+
+    /* Status colors */
+    .popup-success {
+        color: #00ff9c;
+    }
+
+    .popup-error {
+        color: #ff4d6d;
+    }
+
+    .popup-warning {
+        color: #ffd166;
+    }
+
+    /* Animation */
+    @@keyframes popupIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+</style>
+
+<div id="confirmPopupOverlay" class="game-popup-overlay">
+    <div class="game-popup">
+        <div class="popup-icon popup-warning">?</div>
+
+        <div class="popup-title" id="confirmTitle">
+            CONFIRM ACTION
+        </div>
+
+        <div class="popup-message" id="confirmMessage">
+            Are you sure you want to continue?
+        </div>
+
+        <div style="margin-top:20px; display:flex; justify-content:center; gap:15px;">
+            <button id="confirmYesBtn"
+                    style="padding:8px 18px; background:#00ff9c; border:none; cursor:pointer;"
+                    onclick="showGameLoader('Redirecting...', 'Please wait for a moment' )">
+                YES
+            </button>
+
+            <button id="confirmNoBtn"
+                    style="padding:8px 18px; background:#ff4d6d; border:none; cursor:pointer;">
+                NO
+            </button>
+        </div>
+    </div>
+</div>

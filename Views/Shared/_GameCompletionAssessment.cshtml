@@ -1,0 +1,85 @@
+﻿<style>
+    .completion-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.85);
+        backdrop-filter: blur(6px);
+        display: none;
+        z-index: 99999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .completion-box {
+        width: 600px;
+        padding: 30px;
+        border-radius: 16px;
+        text-align: center;
+        background: linear-gradient(135deg,#0b1734,#101c42);
+        border: 1px solid rgba(93,246,255,.3);
+        box-shadow: 0 0 40px rgba(0,234,255,.25);
+    }
+
+    .reward-img {
+        width: 140px;
+        margin: 20px 0;
+    }
+
+    .completion-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+        .completion-actions a {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+</style>
+
+<div id="completionOverlayAssessment" class="completion-overlay">
+    <div class="completion-box">
+        <div>
+            <h1 id="completionTitleAssessment">ASSESSMENT COMPLETED</h1>
+
+            <p id="completionMessageAssessment">
+                You have completed the assessment.
+            </p>
+        </div>
+
+        <h1 id="completionScoreAssessment">0</h1>
+
+        <p id="completionDescriptionAssessment">
+            Did you learn new things from the assessment?\nIf not, would you like to retry?\nIf yes, start your next module.
+        </p>
+
+        <div class="completion-actions">
+
+            <!-- Exit -->
+            <a id="btnExitAssessment"
+               asp-controller="Home"
+               asp-action="Modules"
+               class="btn btn-danger"
+               style="align-content:center;">
+                EXIT
+            </a>
+
+            <!-- Retry -->
+            <a id="btnRetryAssessment"
+               class="btn btn-warning"
+               style="align-content:center;">
+                RETRY
+            </a>
+
+            <!-- Proceed -->
+            <a id="btnProceedAssessment"
+               class="btn btn-success"
+               style="align-content:center;">
+                PROCEED TO NEXT MODULE
+            </a>
+
+        </div>
+
+    </div>
+</div>

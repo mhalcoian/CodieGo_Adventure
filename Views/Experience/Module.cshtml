@@ -1,0 +1,999 @@
+﻿@{
+    string lessonKey = ViewBag.LessonKey;
+    int stage = ViewBag.CurrentProgress;
+    int order = ViewBag.Order;
+    int totalStages = ViewBag.TotalStages;
+    Layout = "~/Views/Shared/_ExperienceLayout.cshtml";
+}
+
+<style>
+    #gameScene {
+        position: relative;
+        flex:1;
+        background: linear-gradient(180deg, #0b0f25, #050714);
+        border: 1px solid #5df6ff33;
+        overflow: hidden;
+    }
+
+    #path {
+        position: absolute;
+        bottom: 0px;
+        width: 2000px; /* long path */
+        height: 80px;
+        background-image: url('/images/paths/pathImage.png');
+        background-repeat: repeat-x;
+        background-size: auto 100%;
+        z-index: 0;
+    }
+
+    #background {
+        position: absolute;
+        inset: 0;
+        background-image: url('/images/backgrounds/universal-background.png');
+        background-repeat: repeat-x;
+        background-size: auto 100%;
+        background-position: 0 0;
+        z-index: 0;
+    }
+
+    #world {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: max-content;
+        transition: transform 0.6s ease-in-out;
+    }
+
+    #player {
+        position: absolute;
+        bottom: 71px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 80px;
+        border-radius: 6px;
+    }
+
+    #player img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .chest {
+        position: absolute;
+        top: -250px;
+        width: 225px;
+        height: 225px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        border-radius: 6px;
+
+        transition: top 0.7s ease-out;
+    }
+
+    .obstacle {
+        position: absolute;
+        top: -250px;
+        width: 225px;
+        height: 225px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        border-radius: 6px;
+
+        transition: top 0.7s ease-out;
+    }
+
+    #introOverlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+        z-index: 998;
+        display: none;
+    }
+
+    .sceneGuide {
+        position: absolute;
+        top: 5%;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index:998;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 95%;
+    }
+
+    .andersGuide {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index:999;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 50%;
+    }
+
+        .andersGuide.intro-highlight {
+            box-shadow: 0 0 30px #00eaffaa;
+            padding: .3rem;
+            border-radius: 12px;
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+
+    @@keyframes pulseGlow {
+        from {
+            box-shadow: 0 0 10px #00eaff88;
+        }
+
+        to {
+            box-shadow: 0 0 30px #00eaff;
+        }
+    }
+
+    .sceneBox {
+        background: #111827;
+        border: 1px solid #5df6ff33;
+        border-radius: 12px;
+        padding: 14px;
+        white-space: pre-wrap;
+        width: 100%;
+        min-height: 100px;
+        color: #e5e7eb;
+    }
+
+    .guideBox {
+        background: #111827;
+        border: 1px solid #5df6ff33;
+        border-radius: 12px;
+        width: 50%;
+    }
+
+    .textGuideBox {
+        white-space: pre-wrap;
+    }
+
+        .textGuideBox.typing::after {
+            content: '|';
+            animation: blink 1s infinite;
+            margin-left: 4px;
+        }
+
+    .line {
+        display: block;
+        white-space: pre-wrap;
+    }
+
+    .last-line::after {
+        content: '|';
+        animation: blink 1s infinite;
+    }
+
+    #andersFrame {
+        display: none;
+    }
+
+    #andersFrame.show {
+        display: block;
+    }
+
+    #introGuides {
+        display: none;
+    }
+
+        #introGuides.show {
+            display: inline-flex;
+        }
+
+    @@keyframes blink {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+</style>
+
+<div style="
+    height:100%;
+    display:flex;
+    color:#fff;
+    border:1px solid #5df6ff33;
+    overflow:hidden;
+    background:#0b0f25;
+">
+    <!-- LEFT PANEL: LESSON GUIDE -->
+    <div style="
+        width:100%;
+        display:flex;
+        flex-direction:column;
+        border-right:1px solid #5df6ff22;
+    ">
+        <!-- BOX 1 — MAIN GUIDE -->
+        <div style="
+            flex:1;
+            padding:10px;
+            border-bottom:1px solid #5df6ff22;
+            display:flex;
+            flex-direction:column;
+            min-height:0;
+        ">
+            <div style="
+                display:flex; 
+                justify-content:space-between; 
+                align-items:center;
+            ">
+                <h3>SYNTAX GUIDE</h3>
+                <button id="summaryBtn"
+                        style="
+                    background:#00eaff;
+                    color:#000;
+                    border:none;
+                    padding:6px 12px;
+                    border-radius:6px;
+                ">
+                    SUMMARY
+                </button>
+            </div>
+
+            <div id="syntaxGuide" style="
+                flex:1;
+                min-height:0;
+                height: 260px;
+                margin-top:8px;
+                background:#0f172a;
+                padding:10px;
+                overflow-y:auto;
+                scrollbar-width:none;
+            ">
+            </div>
+        </div>
+
+        <!-- BOX 2 — TIY -->
+        <div style="
+            flex:1;
+            padding:10px;
+            display:flex;
+            flex-direction:column;
+            min-height:0;
+        ">
+            <h3>TRY IT YOURSELF</h3>
+
+            <div id="notesBox" style="
+                flex:1;
+                min-height:0;
+                margin-top:8px;
+                background:#0f172a;
+                padding:10px;
+                overflow-y:auto;
+                scrollbar-width:none;
+            ">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MIDLE PANEL: Game -->
+    <div style="
+        position:relative;
+        width:100%;
+        border-right:1px solid #5df6ff22;
+    ">
+        <div id="moduleBox" style="
+                min-height:0;
+                height:125px;
+                background:#0f172a;
+                color:#fff;
+                padding:10px;
+                overflow-y:auto;
+                scrollbar-width:none;
+                white-space:pre-wrap;
+                width: 100%;
+                z-index:998;
+                display:none;
+            ">
+Loading challenge...
+        </div>
+
+        <!-- Code Panel -->
+        <div style="
+            height:100%;
+            flex:1;
+            padding:10px;
+            display:flex;
+            flex-direction:column;
+            min-height:0;
+        ">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>CODE PANEL</h3>
+                <div>
+                    <button id="runBtn" style="background:#00eaff; color:#000; border:none; padding:5px 15px; border-radius:6px;">EXECUTE</button>
+                </div>
+            </div>
+            <div id="editor" style="flex:1; min-height:0; margin-top:8px;"></div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: Code Editor + Output/Error Console -->
+    <div style="
+        width:100%;
+        display:flex;
+        flex-direction:column;
+    ">
+        <!-- Output / Error Console -->
+        <div style="flex:1; background:#111; border:1px solid #5df6ff33; padding:10px; overflow-y:auto; scrollbar-width:none;">
+            <h4>OUTPUT CONSOLE</h4>
+            <div id="outputBox"
+                readonly
+                style="
+                width:100%;
+                flex:1;
+                min-height:0;
+                background:transparent;
+                border:none;
+                outline:none;
+                resize:none;
+                white-space:pre-wrap;
+                overflow-y:auto;
+                scrollbar-width:none;
+                margin-top:8px;
+            "></div>
+        </div>
+
+        <!-- GAME SCENE -->
+        <div id="gameScene">
+            <div id="background"></div>
+            <div id="world"></div>
+            <div id="path"></div>
+            <div id="player">
+                <img id="playerSprite" />
+            </div>
+        </div>
+    </div>
+
+    <div id="introGuides" class="andersGuide guideBox">
+        <div id="andersFrame">
+            <div id="anders" style="height:180px;width:180px;background:white;border-radius:8px;"></div>
+            <h4 style="text-align: center;">Anders</h4>
+        </div>
+        <div style="width:100%;height:220px;display:flex;flex-direction:column;justify-content:space-between;">
+            <h1 style="text-align: center;">INTRODUCTION</h1>
+            <div id="introGuide" class="textGuideBox" style="margin-bottom:10px;">
+            </div>
+            <div id="introControls" style="display:none;text-align:right; gap:10px;">
+                <button id="introSkipBtn"
+                        style="
+                    background:#ef4444;
+                    color:#fff;
+                    border:none;
+                    padding:4px 14px;
+                    border-radius:8px;
+                    margin-left:10px;
+                ">
+                    SKIP ⏭
+                </button>
+                <button id="introPrevBtn"
+                        style="background:#374151;color:#fff;border:none;
+                   padding:4px 14px;border-radius:8px; display:none;">
+                    ← PREVIOUS
+                </button>
+
+                <button id="introNextBtn"
+                        style="background:#00eaff;color:#000;border:none;
+                   padding:4px 14px;border-radius:8px;">
+                    NEXT →
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="introOverlay"></div>
+
+<!-- SUMMARY OVERLAY -->
+<div id="summaryOverlay" style="
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.75);
+    backdrop-filter:blur(4px);
+    display:none;
+    z-index:9999;
+"></div>
+
+<!-- SUMMARY BOX -->
+<div id="summaryBox" style="
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    width:50%;
+    max-width:700px;
+    background:#111827;
+    border:1px solid #5df6ff33;
+    border-radius:12px;
+    padding:20px;
+    display:none;
+    z-index:10000;
+    color:#e5e7eb;
+">
+    <h2 style="text-align:center;">LESSON SUMMARY</h2>
+
+    <div id="summaryContent"
+         style="margin-top:10px; white-space:pre-wrap; max-height:300px; overflow-y:auto; scrollbar-width:none;">
+    </div>
+
+    <div style="text-align:right; margin-top:15px;">
+        <button id="closeSummaryBtn"
+                style="background:#374151;color:#fff;border:none;padding:6px 16px;border-radius:8px;">
+            CLOSE
+        </button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<script>
+    require.config({
+        paths: { vs: "https://unpkg.com/monaco-editor@0.45.0/min/vs" }
+    });
+
+    const defaultValue = `using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // this is a comment
+        // any type of text inside this 
+        // double slash will not be read
+        // enter your code after the comments
+        // your coding journey starts here
+    }
+}
+    `;
+
+    let editor;
+    require(["vs/editor/editor.main"], function () {
+        editor = monaco.editor.create(document.getElementById("editor"), {
+            value: defaultValue,
+            language: "csharp",
+            theme: "vs-dark"
+        });
+
+        enableEditor(false);
+    });
+
+    let lessonType = "@lessonKey";
+    let stage = @stage;
+    let order = @order;
+
+    async function loadGuide(stage) {
+        const res = await fetch(`/Module/GetGuide?lessonType=${lessonType}&stage=${stage}`);
+        const data = await res.json();
+        document.getElementById("syntaxGuide").innerText = data.guide;
+    }
+
+    async function loadTask(stage) {
+        const res = await fetch(`/Module/GetTask?lessonType=${lessonType}&stage=${stage}`);
+        const data = await res.json();
+        document.getElementById("moduleBox").innerText = data.task;
+    }
+
+    async function loadNote(stage) {
+        const res = await fetch(`/Module/GetNote?lessonType=${lessonType}&stage=${stage}`);
+        const data = await res.json();
+        document.getElementById("notesBox").innerText = data.note;
+    }
+
+    document.getElementById("runBtn").onclick = async () => {
+        monaco.editor.setModelMarkers(editor.getModel(), "roslyn", []);
+        const code = editor.getValue();
+
+        showGameLoader('Validating...', 'This may take awhile');
+
+        const res = await fetch(`/Module/Compile?lessonType=${lessonType}&stage=${stage}&order=${order}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(code)
+        });
+
+        const data = await res.json();
+
+        if (data.errors?.length) {
+            monaco.editor.setModelMarkers(
+                editor.getModel(),
+                "roslyn",
+                data.errors.map(d => ({
+                    startLineNumber: d.line,
+                    startColumn: d.column,
+                    endLineNumber: d.line,
+                    endColumn: d.column + 1,
+                    message: d.message,
+                    severity: monaco.MarkerSeverity.Error
+                }))
+            );   
+            const output = data.errors
+                .map(e => `Error (Line ${e.line}, Col ${e.column}): ${e.message}`)
+                .join("\n");
+            hideGameLoader();
+            setOutput(output);
+            showGameHUDMessage("error", "COMPILATION FAILED", "Check your syntax.");
+            return;
+        }
+
+        if (data.runtimeError) {   
+            hideGameLoader();
+            showGameHUDMessage("warning", "WARNING", data.runtimeError);
+            return;
+        }
+
+        if (!data.passed) {
+            hideGameLoader();
+            setOutput(data.output);
+            showGameHUDMessage("error", "ERROR", data.message);
+        } else {
+            hideGameLoader();
+            resetIdleTimer();
+            setCharacter("codieidle");
+            setOutput(data.output);
+            showGameHUDMessage("success", "SUCCESS", data.message);
+            destroyObstacle(stage);
+            enableEditor(false);
+
+            setTimeout(() => {
+                stage++;
+
+                editor.setValue(defaultValue);
+
+                document.getElementById("syntaxGuide").innerText = "";
+                document.getElementById("notesBox").innerText = "";
+                document.getElementById("moduleBox").style.display = "none";
+
+                buildLevel(false);
+                moveWorldToStage(stage);
+
+                setTimeout(() => {
+                    if (stage < totalStages) {
+                        walkToNextObstacle(() => {
+                            buildLevel(true);
+                            resetIdleTimer();
+                            setCharacter("codieidle");
+                            document.getElementById("outputBox").innerText = "";
+                            setTimeout(() => {
+                                loadIntroduction(stage);
+                            }, 1000);
+                        });
+                    } else {
+                        walkToNextObstacle(() => {
+                            buildLevel(true);
+                            resetIdleTimer();
+                            setCharacter("codieidle");
+                            document.getElementById("outputBox").innerText = "";
+                            setTimeout(() => {
+                                setCharacter("codiewon");
+                            }, 1000);
+                            setTimeout(() => {
+                                showCompletionOverlay({
+                                    title: "MODULE CLEARED",
+                                    message: "You obtained a puzzle fragment.",
+                                    rewardImage: "/images/obstacles/chest-opened.gif",
+                                    description: "Did you learn something from the module?\nwould you like to retry? or start your assessment.",
+
+                                    exitUrl: "/Home/Modules",
+                                    retryUrl: window.location.href,
+                                    proceedUrl: `/Experience/Assessment?order=${order}`
+                                });
+                            }, 2000);
+                        });
+                    }
+                }, 0);
+            }, 2000);
+        }
+    };
+
+    function setOutput(text) {
+        const outputBox = document.getElementById("outputBox");
+
+        const lines = text.split("\n");
+        
+        outputBox.innerHTML = lines
+            .map((line, i) =>
+                i === lines.length - 1
+                    ? `<div class="line last-line">${line || "&nbsp;"}</div>`
+                    : `<div class="line">${line}</div>`
+            )
+            .join("");
+
+        outputBox.scrollTop = outputBox.scrollHeight;
+    }
+
+    const totalStages = @totalStages;
+    const obstacleSpacing = 300; // spacing of each obstacle
+    const playerOffset = 50; // distance to player and obstacle
+
+    function buildLevel(showObstacles = true) {
+        const world = document.getElementById("world");
+        world.querySelectorAll(".obstacle").forEach(o => o.remove());
+
+        if (!showObstacles) return;
+
+        for (let i = stage; i < totalStages + 1; i++) {
+            const obs = document.createElement("div");
+
+            let imagePath = ``;
+
+            if (i === totalStages) {
+                obs.className = "chest";
+                imagePath = `/images/obstacles/chest-closed.gif`
+            }
+            else {
+                obs.className = "obstacle";
+                imagePath = `/images/obstacles/obstacle-block.png`
+            }
+
+            obs.style.backgroundImage = `url('${imagePath}')`;
+            obs.style.backgroundSize = "contain";
+            obs.style.backgroundRepeat = "no-repeat";
+            obs.style.backgroundPosition = "center";
+            obs.style.backgroundColor = "transparent";
+
+            // obstacle position by player offset
+            obs.style.left = `${i * obstacleSpacing + playerOffset + 290}px`;
+            obs.dataset.stage = i;
+
+            const totalWidth = totalStages * obstacleSpacing + 1000;
+            world.style.width = totalWidth + "px";
+
+            world.appendChild(obs);
+        }
+
+        dropObstacle(stage);
+    }
+
+    let introBgOffset = 0;
+
+    function walkToNextObstacle(callback) {
+        const bg = document.getElementById("background");
+        const path = document.getElementById("path");
+
+        let elapsed = 0;
+        const duration = 3000;
+        const step = 16;
+        
+        resetIdleTimer();
+        setCharacter("codiewalking");
+
+        const walkInterval = setInterval(() => {
+            introBgOffset += 3;
+
+            path.style.backgroundPosition = `${-introBgOffset}px 0`;
+            bg.style.backgroundPosition = `${-introBgOffset}px 0`;
+
+            elapsed += step;
+
+            if (elapsed >= duration) {
+                clearInterval(walkInterval);
+
+                if (callback) callback();
+            }
+
+        }, step);
+    }
+
+    function dropObstacle(stage) {
+        const world = document.getElementById("world");
+        const obstacle = world.querySelector(`.obstacle[data-stage="${stage}"]`) ||
+            world.querySelector(`.chest[data-stage="${stage}"]`);
+        if (!obstacle) return;
+
+        const scene = document.getElementById("gameScene");
+
+        const groundY = scene.offsetHeight - 305;
+
+        requestAnimationFrame(() => {
+            obstacle.style.top = groundY + "px";
+        });
+    }
+
+    function moveWorldToStage(stage) {
+        const world = document.getElementById("world");
+
+        const targetX = (stage) * obstacleSpacing + playerOffset;
+
+        world.style.transform = `translateX(${-targetX}px)`;
+    }
+
+    function enableEditor(enable) {
+        if (!editor) return;
+
+        editor.updateOptions({
+            readOnly: !enable
+        });
+
+        const runBtn = document.getElementById("runBtn");
+        const summaryBtn = document.getElementById("summaryBtn");
+        if (runBtn) {
+            runBtn.disabled = !enable;
+            runBtn.style.opacity = enable ? "1" : "0.5";
+            runBtn.style.cursor = enable ? "pointer" : "not-allowed";
+        }
+        if (summaryBtn) {
+            summaryBtn.disabled = !enable;
+            summaryBtn.style.opacity = enable ? "1" : "0.5";
+            summaryBtn.style.cursor = enable ? "pointer" : "not-allowed";
+        }
+    }
+
+    window.onload = () => {
+        document.getElementById("moduleBox").style.display = "none";
+        moveWorldToStage(stage);
+        walkToNextObstacle(() => {
+            buildLevel(true);
+            resetIdleTimer();
+            setCharacter("codieidle");
+            setTimeout(() => {
+                loadIntroduction(stage);
+            }, 1000);
+        });
+        
+        resetIdleTimer();
+        enableEditor(false);
+    };
+
+    let introLines = [];
+    let introIndex = 0;
+    let isIntroPlaying = false;
+
+    async function loadIntroduction(stage) {
+        const res = await fetch(`/Module/GetIntro?lessonType=${lessonType}&stage=${stage}`);
+        const data = await res.json();
+
+        if (!data.lines || data.lines.length === 0) {
+            loadGuide(stage);
+            loadTask(stage);
+            enableEditor(true);
+            resetIdleTimer();
+            setCharacter("codieidle");
+            startPlayerIdleLoop();
+            return;
+        }
+
+        introLines = data.lines;
+        introIndex = 0;
+        isIntroPlaying = true;
+
+        enableEditor(false);
+
+        document.getElementById("introOverlay").style.display = "block";
+        document.getElementById("introGuide").style.display = "block";
+        document.getElementById("introControls").style.display = "block";
+        document.querySelector(".andersGuide").classList.add("intro-highlight");
+                
+        const anders = document.getElementById("andersFrame")
+        anders.classList.add("show");
+
+        const introGuides = document.getElementById("introGuides")
+        introGuides.classList.add("show");
+
+        showAnders();
+        showIntroLine();
+    }
+
+    function showAnders() {
+        const anders = document.getElementById("anders");
+        const imagePath = `/images/personel/anders.png`;
+
+        anders.style.backgroundImage = `url('${imagePath}')`;
+        anders.style.backgroundSize = "cover";
+        anders.style.backgroundRepeat = "no-repeat";
+        anders.style.backgroundPosition = "center";
+        anders.style.backgroundColor = "#ffffffdd";
+    }
+
+    function showIntroLine() {
+        const guideBox = document.getElementById("introGuide");
+
+        currentFullText = introLines[introIndex];
+        guideBox.innerText = "";
+        isTyping = true;
+
+        guideBox.classList.add("typing");
+
+        let charIndex = 0;
+
+        clearInterval(typingInterval);
+
+        typingInterval = setInterval(() => {
+            guideBox.innerText += currentFullText[charIndex];
+            charIndex++;
+
+            if (charIndex >= currentFullText.length) {
+                clearInterval(typingInterval);
+                isTyping = false;
+                guideBox.classList.remove("typing");
+                updateIntroButtons();
+            }
+        }, typingSpeed);
+        
+        updateIntroButtons();
+    }
+
+    document.getElementById("introNextBtn").onclick = () => {
+        if (isTyping) {
+            clearInterval(typingInterval);
+            document.getElementById("introGuide").innerText = currentFullText;
+            isTyping = false;
+            document.getElementById("introGuide").classList.remove("typing");
+            updateIntroButtons();
+            return;
+        }
+
+        introIndex++;
+
+        if (introIndex >= introLines.length) {
+            finishIntro();
+        } else {
+            showIntroLine();
+        }
+    };
+
+    document.getElementById("introPrevBtn").onclick = () => {
+        if (isTyping) {
+            clearInterval(typingInterval);
+            document.getElementById("introGuide").innerText = currentFullText;
+            isTyping = false;
+            document.getElementById("introGuide").classList.remove("typing");
+            updateIntroButtons();
+            return;
+        }
+
+        if (introIndex > 0) {
+            introIndex--;
+            showIntroLine();
+        }
+    };
+
+    document.getElementById("introSkipBtn").onclick = () => {
+        finishIntro();
+    };
+
+    function finishIntro() {
+        isIntroPlaying = false;
+        
+        document.getElementById("moduleBox").style.display = "block";
+        document.getElementById("introControls").style.display = "none";
+        document.getElementById("introOverlay").style.display = "none";
+        document.getElementById("introGuide").style.display = "none";
+        document.querySelector(".andersGuide").classList.remove("intro-highlight");
+        
+        const anders = document.getElementById("andersFrame")
+        anders.classList.remove("show");
+
+        const introGuides = document.getElementById("introGuides")
+        introGuides.classList.remove("show");
+
+        loadGuide(stage);
+        loadTask(stage);
+        loadNote(stage);
+        enableEditor(true);
+        startPlayerIdleLoop();
+    }
+
+    let typingInterval = null;
+    let isTyping = false;
+    let currentFullText = "";
+    let typingSpeed = 25;
+
+    function updateIntroButtons() {
+        const prevBtn = document.getElementById("introPrevBtn");
+        const nextBtn = document.getElementById("introNextBtn");
+
+        prevBtn.style.display = introIndex > 0 ? "inline-block" : "none";
+
+        if (introIndex === introLines.length - 1) {
+            nextBtn.innerText = "FINISH ✓";
+        } else {
+            nextBtn.innerText = "NEXT →";
+        }
+    }
+
+    function setCharacter(characterName) {
+        const player = document.getElementById("playerSprite");
+
+        player.src = `/images/characters/${characterName}.gif`;
+    }
+
+    let seconds = 0;
+    let playerInterval = null;
+
+    function resetIdleTimer() {
+        clearInterval(playerInterval);
+        seconds = 0;
+    }
+
+    function startPlayerIdleLoop() {
+        if (playerInterval) clearInterval(playerInterval);
+
+        seconds = 0;
+
+        playerInterval = setInterval(() => {
+            seconds++;
+
+            if (seconds === 1) {
+                setCharacter("codieidle");
+            }
+            else if (seconds === 15) {
+                setCharacter("codiesleeping");
+            }
+            else if (seconds === 23) {
+                setCharacter("codieidle");
+            }
+            else if (seconds === 38) {
+                setCharacter("codiespinning");
+            }
+            else if (seconds === 44) {
+                setCharacter("codieidle");
+                seconds = 0;
+            }
+
+        }, 1000);
+    }
+
+    document.getElementById("summaryBtn").onclick = async () => {
+
+        const res = await fetch(`/Module/GetIntro?lessonType=${lessonType}&stage=${stage}`);
+        const data = await res.json();
+
+        if (!data.lines || data.lines.length === 0) return;
+
+        const fullText = data.lines.join("\n\n");
+
+        document.getElementById("summaryContent").innerText = fullText;
+
+        document.getElementById("summaryOverlay").style.display = "block";
+        document.getElementById("summaryBox").style.display = "block";
+    };
+
+    document.getElementById("closeSummaryBtn").onclick = closeSummary;
+    document.getElementById("summaryOverlay").onclick = closeSummary;
+
+    function closeSummary() {
+        document.getElementById("summaryOverlay").style.display = "none";
+        document.getElementById("summaryBox").style.display = "none";
+    }
+
+    function destroyObstacle(stage) {
+        const world = document.getElementById("world");
+
+        const obstacle = world.querySelector(`.obstacle[data-stage="${stage}"]`);
+        if (!obstacle) return;
+
+        const scene = document.getElementById("gameScene");
+
+        const downY = scene.offsetHeight + 200;
+
+        obstacle.style.transition = "top 1s ease-in";
+
+        requestAnimationFrame(() => {
+            obstacle.style.top = downY + "px";
+        });
+
+        setTimeout(() => {
+            obstacle.remove();
+        }, 1000);
+    }
+
+</script>

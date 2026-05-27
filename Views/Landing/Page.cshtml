@@ -1,0 +1,201 @@
+﻿@{
+}
+
+@if (TempData["Popup"] != null)
+{
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const popup = @Html.Raw(TempData["Popup"]);
+                showGameToast(
+                    popup.type,
+                    popup.title,
+                    popup.message
+                );
+            });
+        </script>
+    }
+}
+
+<style>
+    .container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 25px;
+        position: relative;
+    }
+
+    /* TITLE */
+    .title-box {
+        border: 2px solid #3cf2ff;
+        padding: 25px 60px;
+        text-align: center;
+        box-shadow: 0 0 25px rgba(60,242,255,.4);
+    }
+
+        .title-box h1 {
+            font-size: 42px;
+            letter-spacing: 4px;
+            color: #7df9ff;
+        }
+
+        .title-box span {
+            display: block;
+            font-size: 14px;
+            letter-spacing: 3px;
+            color: #a6eaff;
+            margin-top: 5px;
+        }
+
+    .subtitle {
+        font-size: 14px;
+        opacity: .8;
+        margin-bottom: 10px;
+    }
+
+    /* BUTTONS */
+    .menu {
+        width: 360px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .btn-login, .btn-register, .btn-continue {
+        position: relative;
+        padding: 18px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border: 2px solid transparent;
+        transition: .25s;
+    }
+
+    .btn small {
+            display: block;
+            font-size: 10px;
+            opacity: .7;
+            margin-top: 4px;
+        }
+
+    .btn-login {
+        background: linear-gradient(90deg, #00eaff, #00bcd4);
+        color: #021016;
+    }
+
+    .btn-register {
+        background: #cfd2d9;
+        color: #111;
+    }
+
+    .btn-continue {
+        background: #ffd700;
+        color: #111;
+    }
+
+    .btn:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 20px rgba(0,255,255,.4);
+    }
+
+    /* STATS */
+    .stats {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .stat {
+        border: 1px solid rgba(0,255,255,.4);
+        padding: 12px 18px;
+        font-size: 12px;
+        text-align: center;
+        min-width: 120px;
+        background: rgba(0,0,0,.35);
+    }
+
+        .stat strong {
+            display: block;
+            font-size: 18px;
+            color: #5df6ff;
+        }
+
+    /* FOOTER */
+    .footer {
+        position: absolute;
+        bottom: 20px;
+        font-size: 10px;
+        opacity: .6;
+    }
+</style>
+
+<div class="container">
+
+    <div class="title-box">
+        <h1>CODIE GO</h1>
+        <span>ADVENTURE</span>
+    </div>
+
+    <div class="subtitle">
+        Learn the basic fundamentals of CSharp
+    </div>
+
+    <div class="menu">
+
+    @if (ViewBag.HasSession == true)
+    {
+        <a class="text-decoration-none text-black btn btn-continue"
+            asp-controller="Home"
+            asp-action="Dashboard" 
+            onclick="showGameLoader('Redirecting...', 'Please wait for a moment')">
+            CONTINUE
+            <small>Resume your adventure</small>
+        </a>
+    }
+    else
+    {
+        <a class="text-decoration-none text-black btn btn-login"
+            asp-controller="Account"
+            asp-action="Login">
+            LOGIN
+            <small>Access to Game World</small>
+        </a>
+
+        <a class="text-decoration-none text-black btn btn-register"
+            asp-controller="Account"
+            asp-action="Register">
+            REGISTER
+            <small>Create new profile</small>
+        </a>
+    }
+
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            PLAYERS
+            <strong>@ViewBag.TotalPlayers</strong>
+        </div>
+
+        <div class="stat">
+            CHALLENGES
+            <strong>@ViewBag.Challenges</strong>
+        </div>
+
+        <div class="stat">
+            LANGUAGE
+            <strong>C#</strong>
+        </div>
+    </div>
+
+    <div class="footer">
+        @@ALL RIGHTS RESERVED · CODIE GO ADVENTURE · TEAM
+    </div>
+
+</div>
+

@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CODIE GO ADVENTURE</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CodieGo_Adventure.styles.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Grey+Qo&family=Pixelify+Sans:wght@400..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: radial-gradient(circle at top, #0b1734, #040814 75%);
+            color: #e5f6ff;
+            overflow: hidden;
+        }
+
+            /* CYBER GRID */
+            body::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-image: linear-gradient(rgba(0,255,255,.04) 2px, transparent 2px), linear-gradient(90deg, rgba(0,255,255,.04) 2px, transparent 2px);
+                background-size: 60px 60px;
+                pointer-events: none;
+            }
+
+        .page {
+            position: relative;
+            z-index: 2;
+            padding: 40px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page" style="scrollbar-width: none;">
+        @RenderBody()
+    </div>
+
+    @await Html.PartialAsync("_GamePopup")
+    @await Html.PartialAsync("_LoaderPopup")
+    @await Html.PartialAsync("_ToastPopup")
+    <script src="~/js/game-popup.js"></script>
+    <script src="~/js/game-loader.js"></script>
+    <script src="~/js/game-toast.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

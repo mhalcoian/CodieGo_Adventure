@@ -1,0 +1,196 @@
+﻿@{
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+@if (TempData["Popup"] != null)
+{
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const popup = @Html.Raw(TempData["Popup"]);
+                showGamePopup(
+                    popup.type,
+                    popup.title,
+                    popup.message
+                );
+            });
+        </script>
+    }
+}
+
+<style>
+    .container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 25px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .verify-box {
+        background: rgba(0, 255, 255, 0.1);
+        border: 2px solid #00f0ff;
+        padding: 30px 50px;
+        border-radius: 12px;
+        box-shadow: 0 0 35px rgba(0, 255, 255, 0.3);
+        max-width: 400px;
+        width: 100%;
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @@keyframes glow {
+        0%
+
+    {
+        box-shadow: 0 0 15px rgba(0,255,255,0.3);
+    }
+
+    100% {
+        box-shadow: 0 0 35px rgba(0,255,255,0.7);
+    }
+
+    }
+
+    .verify-box h2 {
+        font-size: 36px;
+        color: #00f0ff;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+    }
+
+    .verify-box p {
+        font-size: 14px;
+        color: #a6eaff;
+        margin-bottom: 20px;
+        opacity: 0.85;
+    }
+
+    .verify-box form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .verify-box input[type="text"] {
+        padding: 15px 12px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: 2px solid #00f0ff;
+        background: rgba(0,0,0,0.3);
+        color: #fff;
+        text-align: center;
+        letter-spacing: 2px;
+    }
+
+        .verify-box input[type="text"]::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+    .verify-box button {
+        padding: 18px 25px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(90deg, #00eaff, #00bcd4);
+        color: #021016;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .verify-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
+        }
+
+    .footer {
+        margin-top: 30px;
+        font-size: 10px;
+        opacity: .6;
+    }
+</style>
+
+<div class="container">
+
+    <div class="verify-box">
+        <h2>Verify Your Email</h2>
+        <p>We sent a 6-digit code to your email. Enter it below to continue your adventure:</p>
+
+        <form asp-action="VerifyEmailCode" method="post" onsubmit="showGameLoader('Verifying...', 'Please wait for a moment')">
+            <input type="text" name="code" maxlength="6" placeholder="Enter 6-digit code" />
+            <button type="submit">Verify Email</button>
+        </form>
+
+        <div style="margin-top:15px;font-size:12px;">
+            <button id="resendBtn"
+                    style="background:none;border:none;color:#00f0ff;cursor:pointer;">
+                Resend code
+            </button>
+
+            <div id="timerBox" style="display:none;margin-top:5px;">
+                You can resend in <span id="timer">60</span>s
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        @@ALL RIGHTS RESERVED · CODIE GO ADVENTURES · DEVS
+    </div>
+
+</div>
+
+<script>
+    const resendBtn = document.getElementById("resendBtn");
+    const timerSpan = document.getElementById("timer");
+    const timerBox = document.getElementById("timerBox");
+
+    let cooldown = 60;
+    let interval = null;
+
+    function startCooldown() {
+        resendBtn.disabled = true;
+        timerBox.style.display = "block";
+        timerSpan.textContent = cooldown;
+
+        interval = setInterval(() => {
+            cooldown--;
+            timerSpan.textContent = cooldown;
+
+            if (cooldown <= 0) {
+                clearInterval(interval);
+                resendBtn.disabled = false;
+                timerBox.style.display = "none";
+                resendBtn.textContent = "Resend code";
+                cooldown = 60;
+            }
+        }, 1000);
+    }
+
+    resendBtn.addEventListener("click", async () => {
+        resendBtn.disabled = true;
+
+        const res = await fetch("/Verification/ResendCode", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "RequestVerificationToken":
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        });
+
+        const data = await res.json();
+        showGamePopup(data.type, data.title, data.message);
+
+        if (data.type === "success") {
+            startCooldown();
+        } else {
+            resendBtn.disabled = false;
+        }
+    });
+</script>
+

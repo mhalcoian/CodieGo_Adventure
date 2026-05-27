@@ -1,0 +1,227 @@
+﻿@model Profiles
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_HomeLayout.cshtml";
+}
+
+@if (TempData["Popup"] != null)
+{
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const popup = @Html.Raw(TempData["Popup"]);
+                showGameToast(
+                    popup.type,
+                    popup.title,
+                    popup.message
+                );
+            });
+        </script>
+    }
+}
+
+<style>
+
+    .card-section {
+        margin-bottom: 50px;
+    }
+
+    .section-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 28px;
+        letter-spacing: 2px;
+        color: #5df6ff;
+        text-shadow: 0 0 10px #00eaff;
+        margin-bottom: 10px;
+    }
+
+    /* STATS GRID */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 25px;
+    }
+
+    .progress-card {
+        position: relative;
+        padding: 25px;
+        border-radius: 20px;
+        background: rgba(16,28,66,.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(93,246,255,.4);
+        box-shadow: 0 0 25px rgba(0,234,255,.2);
+        transition: all .3s ease;
+        overflow: hidden;
+    }
+
+        .progress-card::before {
+            content: "";
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 20px;
+            background: linear-gradient(45deg,#00eaff,#7bff9c,#00eaff);
+            z-index: -1;
+            opacity: .2;
+            animation: pulseBorder 4s linear infinite;
+        }
+
+    @@keyframes pulseBorder {
+        0%  {
+            filter: hue-rotate(0deg);
+        }
+
+        100% {
+            filter: hue-rotate(360deg);
+        }
+    }
+
+    .progress-card strong {
+        font-size: 32px;
+        display: block;
+        margin-bottom: 6px;
+        color: #7bff9c;
+    }
+
+    /* grid spacing improvement */
+    .card-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 22px;
+    }
+
+    /* BADGE PANEL */
+    .badge-card {
+        position: relative;
+        padding: 22px 18px;
+        border-radius: 18px;
+        background: linear-gradient(145deg, #0b1734, #0f1e4d);
+        border: 1px solid rgba(93,246,255,.35);
+        box-shadow: 0 0 20px rgba(0,234,255,.12), inset 0 0 20px rgba(0,234,255,.05);
+        text-align: center;
+        transition: all .28s ease;
+        cursor: pointer;
+    }
+
+    .tooltip-text {
+        visibility: hidden;
+        opacity: 0;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ccc;
+        color: #111;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        transition: 0.2s ease;
+        width: 100%;
+        z-index: 100;
+    }
+
+    .badge-card:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* icon */
+    .badge-card span {
+        font-size: 30px;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    /* title */
+    .badge-card small {
+        font-size: 13px;
+        letter-spacing: .5px;
+        opacity: .9;
+    }
+
+    /* Mission subtitle */
+    .mission-sub {
+        color: #7bff9c;
+        letter-spacing: 1px;
+        font-size: 14px;
+        opacity: .8;
+    }
+
+</style>
+
+<div style="margin-bottom:25px;">
+    <h1 class="section-title">PROGRESS CONTROL</h1>
+</div>
+
+<div class="card-section stats-grid">
+
+    <div class="progress-card">
+        <strong>@ViewBag.TotalModulesCompleted/9</strong><br />
+        <span>Modules</span><br /><small class="text-muted">Completed</small>
+     </div>
+
+    <div class="progress-card">
+        <strong>@ViewBag.TotalAssessmentScores.ToString("n0")/100</strong><br />
+        <span>Assessment</span><br /><small class="text-muted">Scores</small>
+     </div>
+
+    <div class="progress-card">
+        <strong>@ViewBag.TotalChallengePoints.ToString("n0")</strong><br />
+        <span>Challenge</span><br /><small class="text-muted">Points</small>
+    </div>
+
+    <div class="progress-card">
+        <strong>@ViewBag.BestTimeFormatted</strong><br />
+        <span>Challenge</span><br /><small class="text-muted">Best Time</small>
+    </div>
+
+    <div class="progress-card">
+        <strong>@ViewBag.RankLevel</strong><br />
+        <span>Challenge</span><br /><small class="text-muted">Rank</small>
+    </div>
+
+</div>
+
+<div style="margin-bottom:25px;">
+    <h1 class="section-title">ACHIEVEMENTS & BADGES</h1>
+</div>
+
+<div class="card-grid">
+
+    @foreach (var achievement in Model.AchievementBadgeCollection.OrderByDescending(a => a.BadgeId))
+    {
+        <div class="badge-card">
+            <span>⭐</span>
+            <br />@achievement.BadgeName
+
+            <div class="tooltip-text">
+                @achievement.Description
+            </div>
+        </div>
+    }
+
+    @foreach (var puzzle in Model.PuzzlesCollection.OrderByDescending(p => p.PuzzleId))
+    {
+        <div class="badge-card">
+            <span>🧩</span>
+            <br />@puzzle.PuzzleName
+
+            <div class="tooltip-text">
+                @puzzle.Description
+            </div>
+        </div>
+    }
+
+    <div class="badge-card">
+        <span>⭐</span>
+        <br />Thank You!
+
+        <div class="tooltip-text">
+            Developer's thank you gift.
+        </div>
+    </div>
+
+</div>

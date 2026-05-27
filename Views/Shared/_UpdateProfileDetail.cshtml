@@ -1,0 +1,106 @@
+﻿@model Profiles
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.75);
+        backdrop-filter: blur(6px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .modal-card {
+        width: 420px;
+        background: linear-gradient(145deg,#0a1533,#0f1e4d);
+        border: 1px solid rgba(93,246,255,.3);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 0 45px rgba(0,234,255,.15);
+    }
+
+    .modal-title {
+        font-family: 'Orbitron', sans-serif;
+        color: #5df6ff;
+        text-align: center;
+        margin-bottom: 18px;
+    }
+
+    .modal-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 10%;
+        border: 3px solid #7bff9c;
+        object-fit: cover;
+        box-shadow: 0 0 20px rgba(123,255,156,.5);
+    }
+
+    .modal-input {
+        background: rgba(0,0,0,.35);
+        border: 1px solid rgba(93,246,255,.3);
+        color: #fff;
+        border-radius: 12px;
+    }
+</style>
+
+<div id="editProfileModal" class="modal-overlay">
+
+    <div class="modal-card">
+
+        <h3 class="modal-title">EDIT PROFILE</h3>
+
+        <form id="editProfileForm"
+              enctype="multipart/form-data">
+
+            <!-- Avatar -->
+            <div class="text-center mb-3">
+
+                <img id="modalPreview"
+                     src="@Model.Base64StringImage"
+                     class="modal-avatar" />
+
+                <input type="file"
+                       name="ImageFile"
+                       accept="image/*"
+                       class="form-control mt-2"
+                       onchange="previewModalImage(event)" />
+            </div>
+
+            <!-- Display Name -->
+            <div class="mb-3">
+                <label class="text-info">Bio</label>
+
+                <input type="text"
+                       name="Bio"
+                       value="@Model.Bio"
+                       class="form-control modal-input"
+                       required />
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex justify-content-between">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        onclick="closeEditModal()">
+                    Cancel
+                </button>
+
+                <button type="button"
+                        class="btn btn-success"
+                        onclick="saveProfileChanges()">
+                    Save
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="~/js/update-profileDetail.js"></script>

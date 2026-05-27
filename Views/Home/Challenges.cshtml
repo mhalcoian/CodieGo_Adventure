@@ -1,0 +1,339 @@
+﻿@model List<ChallengesProgress>
+@{
+    ViewData["Title"] = "Challenges";
+    Layout = "~/Views/Shared/_HomeLayout.cshtml";
+    float time = ViewBag.CountDownTime;
+}
+
+@if (TempData["Popup"] != null)
+{
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const popup = @Html.Raw(TempData["Popup"]);
+                showGamePopup(
+                    popup.type,
+                    popup.title,
+                    popup.message
+                );
+            });
+        </script>
+    }
+}
+
+<style>
+    .ch-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+        .ch-header h1 {
+            color: #5df6ff;
+            font-size: 26px;
+        }
+
+    .ch-filters {
+        display: flex;
+        gap: 10px;
+        font-size: 12px;
+    }
+
+        .ch-filters span {
+            padding: 6px 12px;
+            border: 1px solid rgba(255,255,255,.25);
+            cursor: pointer;
+            opacity: .7;
+        }
+
+            .ch-filters span.active {
+                border-color: #00eaff;
+                color: #00eaff;
+                opacity: 1;
+            }
+
+    .ch-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 25px;
+    }
+
+    .challenge {
+        position: relative;
+        padding: 22px;
+        border-radius: 16px;
+        background: linear-gradient(135deg,#0b1734,#101c42);
+        border: 1px solid rgba(93,246,255,.3);
+        box-shadow: 0 0 30px rgba(0,234,255,.12);
+    }
+
+        .challenge.pink {
+            background: linear-gradient(135deg,#2b0f3a,#1a0630);
+            border-color: #ff3cff;
+            box-shadow: 0 0 30px rgba(255,60,255,.2);
+        }
+
+        .challenge.purple {
+            background: linear-gradient(135deg,#26123f,#12061f);
+            border-color: #a855f7;
+        }
+
+        .challenge.locked {
+            opacity: .4;
+        }
+
+    .easy {
+        border: 2px solid #7bff9c;
+    }
+
+    .medium {
+        border: 2px solid #ffd54a;
+    }
+
+    .hard {
+        border: 2px solid #ff3c3c;
+    }
+
+    .random {
+        background: linear-gradient(135deg,#7bff9c,#ffd54a,#ff3c3c);
+    }
+
+    .badge {
+        display: inline-block;
+        font-size: 11px;
+        padding: 4px 8px;
+        margin-right: 6px;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+
+        .badge.completed {
+            background: #00eaff;
+            color: #000;
+        }
+
+        .badge.progress {
+            background: #ff3cff;
+            color: #fff;
+        }
+
+        .badge.locked {
+            background: rgba(255,255,255,.25);
+        }
+
+    .challenge h3 {
+        color: #5df6ff;
+        margin: 15px 0 5px;
+    }
+
+    .challenge p {
+        font-size: 13px;
+        opacity: .8;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 12px;
+        margin: 18px 0;
+    }
+
+    .stat {
+        background: rgba(0,0,0,.5);
+        padding: 10px;
+        text-align: center;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .progress-bar {
+        height: 6px;
+        background: rgba(255,255,255,.15);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 15px 0;
+    }
+
+        .progress-bar div {
+            height: 100%;
+            background: linear-gradient(90deg,#00eaff,#7bff9c);
+        }
+
+    .ch-btn {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: none;
+        font-weight: bold;
+        background: #00eaff;
+    }
+
+    .btn-progress {
+        background: #ff3cff;
+        color: #fff;
+        cursor: pointer;
+    }
+
+    .btn-disabled {
+        background: rgba(255,255,255,.15);
+        color: #777;
+        cursor: not-allowed;
+    }
+
+    .icon {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        font-size: 22px;
+    }
+</style>
+
+<div class="ch-header">
+    <h1>CODING ASSESSMENTS</h1>
+</div>
+
+<div class="ch-grid">
+    @foreach (var challenge in Model)
+    {
+        @if (challenge.Status != "DAILY CHALLENGE")
+        {
+            if (!challenge.IsLocked)
+            {
+                <!-- UNLOCKED -->
+                <div class="challenge @(challenge.Status == "NOT STARTED" ? "purple" : challenge.Status == "IN PROGRESS" ? "pink" : "")">
+                    <span class="badge @(challenge.Status == "NOT STARTED" ? "locked" : challenge.Status == "IN PROGRESS" ? "progress" : "completed")">@challenge.Status</span>
+                    <span class="icon">
+                        <span style="font-size: 15px">📘 @challenge.CompletedChallenge/@challenge.Challenges.TotalChallenge Task</span>
+                        <div class="progress-bar">
+                            <div style="width:@challenge.TrackProgressBar%"></div>
+                        </div>
+                    </span>
+
+                    <h3>@challenge.Challenges.Title</h3>
+                    <p>@challenge.Challenges.Description</p>
+                    <p>Score: @challenge.AssessmentScores/10</p>
+
+                    <a asp-controller="Experience" asp-action="Assessment" asp-route-order="@challenge.Challenges.Order" class="btn ch-btn @(challenge.Status == "IN PROGRESS" ? "btn-progress" : "")" onclick="showGameLoader('Redirecting...', 'Please wait for a moment')">START ASSESSMENT</a>
+                </div>
+            }
+            else
+            {
+                <!-- LOCKED -->
+                <div class="challenge locked" style="opacity:.45">
+                    <span class="badge locked">???</span>
+                    <span class="icon">🔒</span>
+
+                    <h3>???</h3>
+                    <p>Requirements not met. Complete the requirements to unlock this content.</p>
+
+                    <button class="ch-btn btn-disabled">REQUIREMENTS NOT MET</button>
+                    <button hidden id="btnTimer" class="ch-btn btn-disabled">CHALLENGE IN</button>
+                </div>
+            }
+        }
+    }
+</div>
+
+<div class="ch-header" style="margin-top:24px;">
+    <h1>CODING CHALLENGES</h1>
+</div>
+
+<div class="ch-grid">
+    @foreach (var challenge in Model)
+    {
+        @if (challenge.Status == "DAILY CHALLENGE")
+        {
+            if (!challenge.IsLocked)
+            {
+                <!-- UNLOCKED -->
+                <div class="challenge pink">
+                    <span class="badge progress">@challenge.Status</span>
+                    <span class="icon">▶</span>
+
+                    <h3>@challenge.Challenges.Title</h3>
+                    <p>@challenge.Challenges.Description</p>
+
+                    <div class="stats">
+                        <div class="stat">5<br />Daily</div>
+                        <div class="stat">30:00<br />Time</div>
+                        <div class="stat">(Score + Time)<br />Point</div>
+                    </div>
+
+                    <a hidden="@(challenge.IsDaily == true ? true : false)" 
+                        asp-controller="Experience" 
+                        asp-action="Challenge" 
+                        asp-route-order="@challenge.Challenges.Order" 
+                        class="btn ch-btn btn-progress"
+                       onclick="confirmChallenge(event, '@Url.Action("Challenge", "Experience", new { order = challenge.Challenges.Order })')
+                    ">CHALLENGE</a>
+                    <button hidden="@(challenge.IsDaily == true ? false : true)" id="btnTimer" class="ch-btn btn-disabled">CHALLENGE IN</button>
+                </div>
+            }
+            else
+            {
+                <!-- LOCKED -->
+                <div class="challenge locked" style="opacity:.45">
+                    <span class="badge locked">???</span>
+                    <span class="icon">🔒</span>
+
+                    <h3>???</h3>
+                    <p>Requirements not met. Complete the requirements to unlock this content.</p>
+
+                    <div class="stats">
+                        <div class="stat">-<br />Challenges</div>
+                        <div class="stat">—:—<br />Time</div>
+                        <div class="stat">-<br />Point</div>
+                    </div>
+
+                    <button class="ch-btn btn-disabled">REQUIREMENTS NOT MET</button>
+                    <button hidden id="btnTimer" class="ch-btn btn-disabled">CHALLENGE IN</button>
+                </div>
+            }
+        }
+    }
+</div>
+
+<script>
+    let timeInterval = null;
+    let countdown = Math.floor(@time);
+
+    function startTimer() {
+        timeInterval = setInterval(() => {
+            if (countdown <= 0) {
+                clearInterval(timeInterval);
+                document.getElementById('btnTimer').innerText = "CHALLENGE OPEN!";
+                return;
+            }
+
+            countdown--;
+            document.getElementById('btnTimer').innerText = `CHALLENGE IN (${formatTime(countdown)})`;
+        }, 1000);
+    }
+
+    function formatTime(totalSeconds) {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        return `${hours.toString().padStart(2, '0')}:` +
+               `${minutes.toString().padStart(2, '0')}:` +
+               `${seconds.toString().padStart(2, '0')}`;
+    }
+
+    startTimer();
+
+    function confirmChallenge(e, url)
+    {
+        e.preventDefault(); // stop immediate navigation
+
+        showConfirmPopup(
+            'START CHALLENGE',
+            'Are you ready to begin this challenge?',
+            () => {
+                showGameLoader('Loading Challenge...', 'Prepare yourself');
+                window.location.href = url;
+            }
+        );
+    }
+</script>
