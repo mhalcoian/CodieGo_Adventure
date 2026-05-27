@@ -21,8 +21,8 @@ builder.Services.AddScoped<ContinueToSessionFilter>();
 builder.Services.AddSingleton(new EmailService(
     host: "smtp.gmail.com",      // server
     port: 587,                   // port for TLS
-    user: "codiegoadventure@gmail.com",
-    pass: "hibsiohoxprreksf"
+    user: "youremail@example.domain",
+    pass: "yoursecret"
 ));
 
 builder.Services.AddDbContext<CGADbContext>(options =>
